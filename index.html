@@ -129,7 +129,8 @@
   .rule-chip.fail { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
   .emotion-chip { background: var(--bg4); padding: 2px 10px; border-radius: 20px; font-size: 9px; font-family: var(--font-mono); display: inline-block; }
   .thoughts-box { background: var(--bg4); padding: 9px; border-radius: 5px; font-size: 10px; font-family: var(--font-mono); color: var(--text2); line-height: 1.6; font-style: italic; }
-  .delete-btn { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 8px; font-family: var(--font-mono); margin-left: 8px; }
+  .delete-btn { background: var(--red-bg); border: 1px solid var(--red-border); color: var(--red); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 8px; font-family: var(--font-mono); }
+  .edit-btn { background: var(--blue-bg); border: 1px solid var(--blue); color: var(--blue); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 8px; font-family: var(--font-mono); }
 
   /* CALENDAR */
   .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -744,6 +745,7 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 let trades = [], profile = null, calYear = new Date().getFullYear(), calMonth = new Date().getMonth(), selDay = null;
 let chartEquity, chartEquityMini, chartDaily, chartPips, chartDisc;
+let editingId = null; // tracks which trade is being edited
 
 // ─── STORAGE ────────────────────────────────────────────
 function load() {
@@ -824,7 +826,9 @@ setInterval(updateClock, 1000);
 // ─── FORM ────────────────────────────────────────────────
 function toggleForm() {
   const p = document.getElementById('form-panel');
-  p.style.display = p.style.display === 'block' ? 'none' : 'block';
+  const isOpen = p.style.display === 'block';
+  if (isOpen) { resetForm(); p.style.display = 'none'; }
+  else p.style.display = 'block';
 }
 function autofillTime() {
   if (!profile) return;
@@ -837,7 +841,7 @@ function autofillTime() {
 }
 function saveTrade() {
   const t = {
-    id: Date.now(),
+    id: editingId || Date.now(),
     date: document.getElementById('f-date').value,
     time: document.getElementById('f-time').value,
     direction: document.getElementById('f-dir').value,
@@ -864,17 +868,80 @@ function saveTrade() {
     thoughts: document.getElementById('f-thoughts').value
   };
   if (!t.date || !t.time) { alert('Please fill in at least date and time.'); return; }
-  trades.push(t);
+
+  if (editingId) {
+    // UPDATE existing trade
+    trades = trades.map(existing => existing.id === editingId ? t : existing);
+    editingId = null;
+  } else {
+    // NEW trade
+    trades.push(t);
+  }
+
   save();
+  resetForm();
+  document.getElementById('form-panel').style.display = 'none';
+  render();
+}
+
+function resetForm() {
+  editingId = null;
   ['f-date','f-time','f-entry','f-exit','f-sl','f-tp','f-pips','f-pnl','f-thoughts'].forEach(id => document.getElementById(id).value = '');
   ['r1','r2','r3','r4','r5','r6'].forEach(id => document.getElementById(id).checked = false);
   document.getElementById('f-pips-display').textContent = '—';
   document.getElementById('f-pips-display').className = 'auto-field';
   document.getElementById('f-pnl-display').textContent = '—';
   document.getElementById('f-pnl-display').className = 'auto-field';
-  document.getElementById('form-panel').style.display = 'none';
-  render();
+  document.getElementById('f-lot').value = '0.01';
+  document.getElementById('f-dir').value = 'BUY';
+  document.getElementById('f-result').value = 'WIN';
+  document.getElementById('f-emotion').value = 'Calm';
+  // Reset form title and button
+  document.querySelector('.form-title span').innerHTML = 'NEW TRADE ENTRY — <span style="color:var(--text2)">Log in your local time</span>';
+  document.querySelector('#form-panel .btn-green').textContent = 'SAVE TRADE ✓';
 }
+
+function editTrade(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return;
+  editingId = id;
+
+  // Fill form with trade data
+  document.getElementById('f-date').value    = t.date;
+  document.getElementById('f-time').value    = t.time;
+  document.getElementById('f-dir').value     = t.direction;
+  document.getElementById('f-lot').value     = t.lotSize;
+  document.getElementById('f-entry').value   = t.entry;
+  document.getElementById('f-exit').value    = t.exit;
+  document.getElementById('f-sl').value      = t.sl;
+  document.getElementById('f-tp').value      = t.tp;
+  document.getElementById('f-pips').value    = t.pips;
+  document.getElementById('f-pnl').value     = t.pnl;
+  document.getElementById('f-result').value  = t.result;
+  document.getElementById('f-session').value = t.session;
+  document.getElementById('f-bias').value    = t.higherTFBias;
+  document.getElementById('f-biasmatch').value = t.biasMatch ? 'yes' : 'no';
+  document.getElementById('f-emotion').value = t.emotion;
+  document.getElementById('f-thoughts').value = t.thoughts || '';
+  t.rules.forEach((v, i) => { document.getElementById(`r${i+1}`).checked = v; });
+
+  // Show pips + PNL in auto-fields
+  const pc = t.pips > 0 ? 'positive' : t.pips < 0 ? 'negative' : 'zero';
+  document.getElementById('f-pips-display').textContent = `${t.pips > 0 ? '+' : ''}${t.pips} pips`;
+  document.getElementById('f-pips-display').className = `auto-field ${pc}`;
+  document.getElementById('f-pnl-display').textContent = `${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}`;
+  document.getElementById('f-pnl-display').className = `auto-field ${pc}`;
+
+  // Update form title and button
+  document.querySelector('.form-title span').innerHTML = `EDITING TRADE — <span style="color:var(--yellow)">${t.date} · ${fmt12short(t.time)} · ${t.direction}</span>`;
+  document.querySelector('#form-panel .btn-green').textContent = 'UPDATE TRADE ✓';
+  document.querySelector('#form-panel .btn-green').style.background = 'linear-gradient(135deg,#eab308,#a16207)';
+
+  // Open form and scroll to top
+  document.getElementById('form-panel').style.display = 'block';
+  document.getElementById('form-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function deleteTrade(id) {
   if (!confirm('Delete this trade?')) return;
   trades = trades.filter(t => t.id !== id);
@@ -1117,7 +1184,8 @@ function renderLog() {
         <div class="emotion-chip" style="color:${EMOTION_COLORS[t.emotion]||'#94a3b8'}">● ${t.emotion}</div>
         <div style="font-size:8px;color:var(--text3);letter-spacing:1px;font-family:var(--font-mono);margin:8px 0 4px;">THOUGHTS</div>
         <div class="thoughts-box">"${t.thoughts||'No notes recorded.'}"</div>
-        <div style="margin-top:10px;">
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="edit-btn" onclick="editTrade(${t.id})">✏️ EDIT TRADE</button>
           <button class="delete-btn" onclick="deleteTrade(${t.id})">🗑 DELETE TRADE</button>
         </div>
       </div>
