@@ -204,6 +204,185 @@
     #form-panel { padding: 16px 32px; }
     .kpi-grid { grid-template-columns: repeat(4, 1fr); }
     .sig-tf-grid { grid-template-columns: repeat(3, 1fr); }
+    .sig-levels-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: repeat(5, 1fr); }
+    .detail-grid { grid-template-columns: repeat(4, 1fr); }
+    .header-left h1 { font-size: 24px; }
+    .equity-val { font-size: 26px; }
+    .sig-overall-value { font-size: 36px; }
+    .clock-time { font-size: 24px; }
+    .modal-box { max-width: 480px; }
+    .cal-grid { gap: 5px; }
+    .cal-cell { min-height: 60px; padding: 6px; }
+    .cal-day-num { font-size: 12px; }
+    /* Desktop signal: bigger cards */
+    .sig-level-card { min-height: 300px; }
+    .sig-level-title { font-size: 11px; }
+    .sig-metric-val { font-size: 13px; }
+    .sig-ict-chip { font-size: 9px; }
+    .sig-tf-row-name { font-size: 10px; }
+    /* Desktop optimal entry highlight */
+    .opt-entry-price { font-size: 30px !important; }
+    .sig-confluence-val { font-size: 18px; }
+  }
+
+  /* TABLET (601px–1023px) */
+  @media(min-width:601px) and (max-width:1023px) {
+    #content { padding: 14px 18px; }
+    .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    .sig-tf-grid { grid-template-columns: repeat(2, 1fr); }
+    .sig-levels-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: repeat(3, 1fr); }
+    .clock-time { font-size: 20px; }
+    .sig-overall-value { font-size: 28px; }
+    /* Tablet: 2 cols for metrics */
+    .sig-metrics-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* MOBILE (≤600px) */
+  @media(max-width:600px) {
+    /* Clock bar stacks */
+    #clock-bar { flex-direction: column; align-items: stretch; padding: 10px 14px; gap: 10px; }
+    .clock-left { justify-content: space-around; gap: 10px; }
+    .clock-time { font-size: 18px; }
+    .clock-time.mt5 { font-size: 15px; }
+    .session-badge { min-width: unset; width: 100%; }
+    .clock-divider { display: none; }
+
+    /* Header stacks */
+    #header { flex-direction: column; gap: 10px; padding: 12px 14px; }
+    .header-right { text-align: left; }
+    .header-left h1 { font-size: 16px; }
+    .equity-val { font-size: 20px; }
+
+    /* Action bar wraps */
+    #action-bar { padding: 8px 14px; gap: 6px; flex-wrap: wrap; }
+    .btn { padding: 9px 12px; font-size: 9px; }
+
+    /* Form full width */
+    #form-panel { padding: 12px 14px; }
+    .form-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .form-group input, .form-group select, .form-group textarea { font-size: 12px; padding: 9px 8px; }
+
+    /* Tabs scroll horizontally */
+    #tabs { padding: 0; }
+    .tab { padding: 10px 11px; font-size: 8px; letter-spacing: 1px; }
+
+    /* Content */
+    #content { padding: 12px 14px; }
+    .card { padding: 12px; }
+    .card-title { font-size: 7px; }
+
+    /* KPI grid 2 columns on mobile */
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    .kpi-val { font-size: 20px; }
+    .kpi-label { font-size: 7px; }
+
+    /* Charts */
+    .chart-wrap { height: 150px; }
+    .chart-wrap-sm { height: 130px; }
+
+    /* Calendar mobile */
+    .cal-cell { min-height: 42px; padding: 3px 2px; }
+    .cal-day-num { font-size: 9px; }
+    .cal-day-trades { font-size: 7px; }
+    .cal-day-pnl { font-size: 7px; }
+    .cal-title { font-size: 12px; }
+    .cal-legend { gap: 6px; }
+    .cal-legend-item { font-size: 8px; }
+    .cal-grid { gap: 2px; }
+
+    /* Trade log mobile */
+    .trade-header { padding: 10px 10px; flex-wrap: wrap; gap: 6px; }
+    .detail-grid { grid-template-columns: repeat(2, 1fr); }
+    .rule-chips { gap: 3px; }
+    .rule-chip { font-size: 7px; padding: 2px 6px; }
+
+    /* Signal tab mobile — full single column */
+    .sig-settings { flex-direction: column; }
+    .sig-settings .form-group { width: 100%; }
+    .sig-tf-grid { grid-template-columns: 1fr; }
+    .sig-levels-grid { grid-template-columns: 1fr; }
+    .sig-overall-value { font-size: 22px; }
+    .sig-overall { padding: 12px; }
+    .sig-overall-sub { font-size: 9px; }
+    .sig-metrics-row { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .sig-metric-val { font-size: 10px; }
+    .sig-chart-wra-bg); border: 1px solid var(--red-border); color: var(--red); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 8px; font-family: var(--font-mono); }
+  .edit-btn { background: var(--blue-bg); border: 1px solid var(--blue); color: var(--blue); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 8px; font-family: var(--font-mono); }
+
+  /* CALENDAR */
+  .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .cal-nav button { background: var(--bg4); border: 1px solid var(--border2); color: var(--text2); padding: 5px 12px; border-radius: 5px; cursor: pointer; font-family: var(--font-mono); font-size: 11px; }
+  .cal-title { font-size: 14px; font-weight: 700; font-family: var(--font-mono); letter-spacing: 2px; }
+  .cal-legend { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .cal-legend-item { display: flex; align-items: center; gap: 4px; font-size: 9px; font-family: var(--font-mono); color: var(--text4); }
+  .cal-legend-dot { width: 7px; height: 7px; border-radius: 2px; }
+  .cal-days-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 3px; }
+  .cal-day-name { text-align: center; font-size: 8px; color: var(--text3); font-family: var(--font-mono); letter-spacing: 1px; padding: 3px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 12px; }
+  .cal-cell { border-radius: 5px; padding: 5px 3px; text-align: center; min-height: 46px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid; background: var(--bg3); border-color: var(--border); }
+  .cal-cell.has-trades { cursor: pointer; }
+  .cal-cell.profit { background: var(--green-bg); border-color: var(--green); }
+  .cal-cell.loss { background: var(--red-bg); border-color: var(--red); }
+  .cal-cell.be { background: var(--yellow-bg); border-color: var(--yellow); }
+  .cal-cell.selected { border-color: var(--blue) !important; }
+  .cal-day-num { font-size: 10px; font-weight: 700; font-family: var(--font-mono); }
+  .cal-day-trades { font-size: 8px; color: var(--text4); font-family: var(--font-mono); }
+  .cal-day-pnl { font-size: 8px; font-weight: 700; font-family: var(--font-mono); }
+  .cal-detail { background: var(--bg3); border: 1px solid var(--blue); border-radius: 8px; padding: 14px; }
+  .cal-detail-title { font-size: 9px; color: var(--blue); letter-spacing: 2px; font-family: var(--font-mono); margin-bottom: 10px; }
+  .cal-trade-mini { background: var(--bg4); border-radius: 6px; padding: 9px; margin-bottom: 6px; }
+
+  /* CHARTS */
+  .chart-wrap { position: relative; height: 180px; margin-bottom: 4px; }
+  .chart-wrap-sm { position: relative; height: 150px; margin-bottom: 4px; }
+  .outcome-bars { display: flex; gap: 8px; margin-bottom: 8px; }
+  .outcome-bar-item { flex: 1; border-radius: 8px; padding: 10px; text-align: center; border: 1px solid; }
+  .outcome-big { font-size: 22px; font-weight: 700; font-family: var(--font-mono); }
+  .outcome-label { font-size: 8px; letter-spacing: 1px; font-family: var(--font-mono); margin-top: 2px; }
+  .outcome-pct { font-size: 9px; color: var(--text4); margin-top: 3px; font-family: var(--font-mono); }
+  .outcome-track { background: var(--bg4); border-radius: 4px; height: 7px; display: flex; overflow: hidden; margin-top: 8px; }
+
+  /* DISCIPLINE */
+  .emotion-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--bg4); }
+
+  /* PDF / PRINT */
+  @media print {
+    #clock-bar, #action-bar, #tabs, #form-panel, .btn, .delete-btn, .tab, .cal-nav button { display: none !important; }
+    body { background: #fff !important; color: #000 !important; }
+    .card, .kpi-card, .trade-item, .cal-detail { border: 1px solid #ccc !important; background: #fff !important; }
+    .card-title, .kpi-label, .kpi-val, .trade-time, .detail-label, .detail-val { color: #000 !important; }
+    .tab-panel { display: block !important; }
+    #header { background: #fff !important; border-bottom: 2px solid #000 !important; }
+    .equity-val, .header-left h1 { color: #000 !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .trade-body { display: block !important; }
+    canvas { max-width: 100%; }
+  }
+
+  /* SETUP MODAL */
+  #setup-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: center; justify-content: center; }
+  .modal-box { background: var(--bg3); border: 1px solid var(--border2); border-radius: 12px; padding: 28px; max-width: 420px; width: 90%; }
+  .modal-title { font-size: 16px; font-weight: 700; font-family: var(--font-mono); letter-spacing: 1px; margin-bottom: 6px; color: var(--blue); }
+  .modal-sub { font-size: 11px; color: var(--text4); margin-bottom: 18px; line-height: 1.6; }
+  .modal-form-group { margin-bottom: 12px; }
+  .modal-form-group label { display: block; font-size: 9px; color: var(--text3); letter-spacing: 1px; font-family: var(--font-mono); margin-bottom: 4px; }
+  .modal-form-group input, .modal-form-group select { width: 100%; background: var(--bg4); border: 1px solid var(--border2); color: var(--text); padding: 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 12px; }
+  .modal-note { font-size: 9px; color: var(--text4); margin-top: 14px; line-height: 1.6; font-family: var(--font-mono); background: var(--bg4); padding: 10px; border-radius: 5px; }
+
+  /* ── RESPONSIVE SYSTEM ─────────────────────────────────── */
+
+  /* DESKTOP (1024px+) */
+  @media(min-width:1024px) {
+    #content { padding: 20px 32px; max-width: 1400px; margin: 0 auto; }
+    #clock-bar { padding: 10px 32px; }
+    #header { padding: 16px 32px; }
+    #action-bar { padding: 10px 32px; }
+    #tabs { padding: 0 32px; }
+    #form-panel { padding: 16px 32px; }
+    .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    .sig-tf-grid { grid-template-columns: repeat(3, 1fr); }
     .form-grid { grid-template-columns: repeat(5, 1fr); }
     .detail-grid { grid-template-columns: repeat(4, 1fr); }
     .header-left h1 { font-size: 24px; }
