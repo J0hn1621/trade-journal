@@ -2185,15 +2185,15 @@ function renderFullSignals(pair,results) {
     <div class="sig-overall-updated">Updated: ${now.toLocaleTimeString()} · Price: ${results[0].price.toFixed(5)}</div>`;
 
   // ── FRESHNESS SCORE ──────────────────────────────────────
-  const r0 = results[0]; // shortest TF = most relevant for entry timing
-  const lastIdx = r0.candles.length - 1;
-  const curPrice = r0.price;
+  const freshTF = results[0]; // shortest TF = most relevant for entry timing
+  const lastIdx = freshTF.candles.length - 1;
+  const curPrice = freshTF.price;
 
   // 1. Signal age — how many candles since EMA crossover
   let crossAge = 999;
   for (let i = lastIdx; i > 0; i--) {
-    const p9 = r0.ema9[i-1], p21 = r0.ema21[i-1];
-    const c9 = r0.ema9[i],   c21 = r0.ema21[i];
+    const p9 = freshTF.ema9[i-1], p21 = freshTF.ema21[i-1];
+    const c9 = freshTF.ema9[i],   c21 = freshTF.ema21[i];
     if (!p9||!p21||!c9||!c21) continue;
     const crossedUp = p9 <= p21 && c9 > c21;
     const crossedDn = p9 >= p21 && c9 < c21;
@@ -2205,21 +2205,21 @@ function renderFullSignals(pair,results) {
   // 2. EMA distance — how far price is from EMA 9 in pips
   const isJPYf = curPrice > 10;
   const pipSzF = isJPYf ? 0.01 : 0.0001;
-  const emaDist = r0.e9 ? Math.abs(curPrice - r0.e9) / pipSzF : 999;
+  const emaDist = freshTF.e9 ? Math.abs(curPrice - freshTF.e9) / pipSzF : 999;
   const distScore = emaDist <= 3 ? 100 : emaDist <= 8 ? 80 : emaDist <= 15 ? 55 : emaDist <= 25 ? 30 : 10;
   const distLabel = emaDist <= 3 ? '🟢 Very close ('+emaDist.toFixed(1)+'p)' : emaDist <= 8 ? '🟡 Close ('+emaDist.toFixed(1)+'p)' : emaDist <= 15 ? '🟠 Extended ('+emaDist.toFixed(1)+'p)' : '🔴 Far from EMA ('+emaDist.toFixed(1)+'p from EMA9)';
 
   // 3. RSI extreme filter
-  const rsiVal = r0.rsiLast;
+  const rsiVal = freshTF.rsiLast;
   const rsiScore = (rsiVal > 45 && rsiVal < 65) ? 100 : (rsiVal > 35 && rsiVal < 75) ? 70 : (rsiVal > 25 && rsiVal < 80) ? 40 : 10;
   const rsiLabel = rsiVal > 75 ? '🔴 Overbought ('+rsiVal+') — risk of reversal' : rsiVal < 25 ? '🔴 Oversold ('+rsiVal+') — risk of reversal' : rsiVal > 65 ? '🟠 Elevated ('+rsiVal+') — extended' : rsiVal < 35 ? '🟠 Depressed ('+rsiVal+') — extended' : '🟢 Healthy zone ('+rsiVal+')';
 
   // 4. Pullback zone — optimal wait price
   const pullbackPips = Math.max(3, Math.min(10, emaDist * 0.6));
   const pullbackDir = bSig === 'BUY' ? -1 : 1;
-  const pullbackPrice = r0.e9 ? (r0.e9 + pullbackDir * pullbackPips * pipSzF * -1).toFixed(5) : '—';
-  const pullbackZoneLow  = r0.e9 ? (r0.e9 - 3*pipSzF).toFixed(5) : '—';
-  const pullbackZoneHigh = r0.e9 ? (r0.e9 + 3*pipSzF).toFixed(5) : '—';
+  const pullbackPrice = freshTF.e9 ? (freshTF.e9 + pullbackDir * pullbackPips * pipSzF * -1).toFixed(5) : '—';
+  const pullbackZoneLow  = freshTF.e9 ? (freshTF.e9 - 3*pipSzF).toFixed(5) : '—';
+  const pullbackZoneHigh = freshTF.e9 ? (freshTF.e9 + 3*pipSzF).toFixed(5) : '—';
 
   // Combined freshness score (weighted)
   const freshScore = Math.round(ageScore * 0.40 + distScore * 0.35 + rsiScore * 0.25);
