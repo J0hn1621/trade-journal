@@ -2185,6 +2185,11 @@ function renderFullSignals(pair,results) {
     <div class="sig-overall-updated">Updated: ${now.toLocaleTimeString()} · Price: ${results[0].price.toFixed(5)}</div>`;
 
   // ── FRESHNESS SCORE ──────────────────────────────────────
+  // Pre-compute bSig here so freshness section can use it
+  const bScoresEarly = results.map(r=>r.signal==='BUY'?1:r.signal==='SELL'?-1:0);
+  const bSumEarly = bScoresEarly.reduce((a,b)=>a+b,0);
+  const bSig = bSumEarly>0?'BUY':bSumEarly<0?'SELL':'NEUTRAL';
+
   const freshTF = results[0]; // shortest TF = most relevant for entry timing
   const lastIdx = freshTF.candles.length - 1;
   const curPrice = freshTF.price;
@@ -2308,7 +2313,7 @@ function renderFullSignals(pair,results) {
   // ── BEGINNER CARD ────────────────────────────────────────
   const bScores=results.map(r=>r.signal==='BUY'?1:r.signal==='SELL'?-1:0);
   const bSum=bScores.reduce((a,b)=>a+b,0);
-  const bSig=bSum>0?'BUY':bSum<0?'SELL':'NEUTRAL';
+  // bSig already declared above in freshness section
   const bCard=document.createElement('div');
   bCard.className='sig-level-card';
   bCard.innerHTML=`
