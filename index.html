@@ -2834,32 +2834,106 @@ function renderQuantStats() {
   const shColor  = sharpe > 1 ? '#22c55e' : sharpe > 0 ? '#eab308' : '#ef4444';
 
   const stats = [
-    { l:'EXPECTANCY', v: (expectancy>0?'+':'')+expectancy.toFixed(2)+' pips/trade', c:expColor, desc:'Expected pips per trade. Positive = profitable edge.' },
-    { l:'PROFIT FACTOR', v: profitFactor === 999 ? '∞' : profitFactor.toFixed(2), c:pfColor, desc:'Gross profit ÷ gross loss. Above 1.5 = strong. Above 1 = profitable.' },
-    { l:'MAX DRAWDOWN', v: maxDD.toFixed(1)+'%', c:ddColor, desc:'Largest peak-to-trough loss. Under 10% = safe. Over 20% = danger.' },
-    { l:'SHARPE RATIO', v: sharpe.toFixed(2), c:shColor, desc:'Return relative to risk. Above 1 = good. Above 2 = excellent.' },
-    { l:'WIN RATE', v: (winRate*100).toFixed(1)+'%', c:winRate>=0.5?'#22c55e':'#ef4444', desc:'% of winning trades. Needs to pair with R:R to be meaningful.' },
-    { l:'AVG WIN', v: '+'+avgWin.toFixed(1)+' pips', c:'#22c55e', desc:'Average pips on winning trades.' },
-    { l:'AVG LOSS', v: '-'+avgLoss.toFixed(1)+' pips', c:'#ef4444', desc:'Average pips on losing trades.' },
-    { l:'BEST WIN STREAK', v: maxWinStreak+' trades', c:'#22c55e', desc:'Longest consecutive winning streak.' },
-    { l:'WORST LOSS STREAK', v: maxLossStreak+' trades', c:'#ef4444', desc:'Longest consecutive losing streak.' },
-    { l:'TOTAL TRADES', v: trades.length, c:'#94a3b8', desc:'Sample size. More trades = more reliable stats.' },
+    {
+      l:'EXPECTANCY', v: (expectancy>0?'+':'')+expectancy.toFixed(2)+' pips/trade', c:expColor,
+      desc:'Expected pips per trade on average.',
+      explain: expectancy > 0
+        ? 'This means on average you make '+Math.abs(expectancy).toFixed(1)+' pips every time you trade. Positive = your strategy has real edge. This is the most important number.'
+        : 'This means on average you LOSE '+Math.abs(expectancy).toFixed(1)+' pips per trade. A negative expectancy means even if you trade forever, you will lose money over time.',
+      what:'Think of it like a casino. If every bet you make gives you +$1 on average, you have edge. If it costs you -$1 on average, the house wins.',
+    },
+    {
+      l:'PROFIT FACTOR', v: profitFactor === 999 ? '∞' : profitFactor.toFixed(2), c:pfColor,
+      desc:'Gross profit ÷ gross loss.',
+      explain: profitFactor >= 1.5 ? 'Strong result. For every $1 you lose, you make $'+profitFactor.toFixed(2)+'. Above 1.5 is considered a solid strategy.' : profitFactor >= 1 ? 'Profitable but thin. For every $1 you lose you make $'+profitFactor.toFixed(2)+'. Try to get this above 1.5.' : 'Losing money overall. Your losses outweigh your wins in dollar terms.',
+      what:'If your profit factor is 1.3, it means: for every $100 you lose, you made $130. Anything above 1.0 means you are profitable.',
+    },
+    {
+      l:'MAX DRAWDOWN', v: maxDD.toFixed(1)+'%', c:ddColor,
+      desc:'Largest peak-to-trough account loss.',
+      explain: maxDD < 10 ? 'Excellent. Your worst losing period only dropped your account by '+maxDD.toFixed(1)+'%. Very safe.' : maxDD < 20 ? 'Acceptable. Your worst run dropped your account by '+maxDD.toFixed(1)+'%. Watch your losing streaks.' : 'Warning. You lost '+maxDD.toFixed(1)+'% of your account at your worst point. This is high — tighten risk management.',
+      what:'Imagine your account went from $5000 to $4500 at its worst before recovering. That is a 10% drawdown. The lower this number, the safer your trading.',
+    },
+    {
+      l:'SHARPE RATIO', v: sharpe.toFixed(2), c:shColor,
+      desc:'Return relative to volatility.',
+      explain: sharpe > 2 ? 'Excellent. High return with low volatility. Professional level.' : sharpe > 1 ? 'Good. Your returns are consistent relative to your risk.' : sharpe > 0 ? 'Weak but positive. Returns are inconsistent — some big wins, some big losses.' : 'Poor. Risk is not being rewarded.',
+      what:'A simple way to think about it: a Sharpe of 1.0 means you are getting $1 of return for every $1 of risk you take. Higher is always better.',
+    },
+    {
+      l:'WIN RATE', v: (winRate*100).toFixed(1)+'%', c:winRate>=0.5?'#22c55e':'#ef4444',
+      desc:'Percentage of trades that were profitable.',
+      explain: winRate >= 0.6 ? 'Strong win rate of '+(winRate*100).toFixed(1)+'%. More than half your trades win.' : winRate >= 0.5 ? 'Win rate of '+(winRate*100).toFixed(1)+'% — slightly above 50%. Combined with your R:R this can still be profitable.' : 'Win rate of '+(winRate*100).toFixed(1)+'% — below 50%. This is okay IF your average win is much bigger than your average loss.',
+      what:'Important: a 40% win rate can still be profitable if you win 30 pips and only lose 10 pips. Win rate alone means nothing — always look at it together with your average win vs average loss.',
+    },
+    {
+      l:'AVG WIN', v: '+'+avgWin.toFixed(1)+' pips', c:'#22c55e',
+      desc:'Average pips earned on winning trades.',
+      explain: 'When you win, you make '+avgWin.toFixed(1)+' pips on average. Your TP is set to 20 pips — this shows how often you hit full TP vs exiting early.',
+      what:'If your average win is lower than your TP (20 pips), it means you are closing trades too early before they hit TP. Try to let your winners run.',
+    },
+    {
+      l:'AVG LOSS', v: '-'+avgLoss.toFixed(1)+' pips', c:'#ef4444',
+      desc:'Average pips lost on losing trades.',
+      explain: 'When you lose, you lose '+avgLoss.toFixed(1)+' pips on average. Your SL is set to 15 pips — if this is higher, you may be moving your SL or entering without one.',
+      what:'If your average loss is bigger than your SL (15 pips), that is a red flag — it means you broke your rules at some point. Your SL should protect you from losses bigger than 15 pips.',
+    },
+    {
+      l:'BEST WIN STREAK', v: maxWinStreak+' trades', c:'#22c55e',
+      desc:'Longest consecutive winning run.',
+      explain: 'Your best run was '+maxWinStreak+' wins in a row. This is useful to know because overconfidence after a win streak is one of the most common reasons traders blow accounts.',
+      what:'After a long winning streak, traders often increase their lot size or take riskier setups. Do not do this — stick to your rules regardless of how many wins you have had.',
+    },
+    {
+      l:'WORST LOSS STREAK', v: maxLossStreak+' trades', c:'#ef4444',
+      desc:'Longest consecutive losing run.',
+      explain: 'Your worst run was '+maxLossStreak+' losses in a row. Even a profitable strategy will have losing streaks. Knowing this helps you mentally prepare.',
+      what:'If your strategy has a 50% win rate, losing 4 or 5 in a row is completely normal — it is just math. The danger is when you start revenge trading after loss 2 or 3.',
+    },
+    {
+      l:'TOTAL TRADES', v: trades.length, c:'#94a3b8',
+      desc:'Total number of trades logged.',
+      explain: trades.length < 20 ? 'You only have '+trades.length+' trades logged. This is not enough for reliable statistics — the numbers can change dramatically with just a few more trades.' : trades.length < 50 ? 'Getting better. '+trades.length+' trades gives a rough picture but aim for 50+ for more reliable data.' : 'Good sample size. '+trades.length+' trades is enough to start drawing meaningful conclusions about your strategy.',
+      what:'Statistics only become reliable with enough data. Think of flipping a coin 5 times vs 1000 times — 5 flips might show 5 heads, but 1000 flips will show close to 50/50. Trading works the same way.',
+    },
   ];
 
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:12px;">' +
-    stats.map(s=>'<div style="background:var(--bg4);border-radius:6px;padding:10px;border:1px solid var(--border);">' +
-      '<div style="font-size:7px;color:var(--text3);letter-spacing:1px;font-family:var(--font-mono);margin-bottom:3px;">'+s.l+'</div>' +
-      '<div style="font-size:18px;font-weight:700;font-family:var(--font-mono);color:'+s.c+';margin-bottom:3px;">'+s.v+'</div>' +
-      '<div style="font-size:8px;color:var(--text4);font-family:var(--font-mono);line-height:1.5;">'+s.desc+'</div>' +
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px;">' +
+    stats.map(s=>'<div style="background:var(--bg4);border-radius:8px;padding:12px;border:1px solid var(--border);display:flex;flex-direction:column;gap:6px;">' +
+      '<div style="font-size:7px;color:var(--text3);letter-spacing:2px;font-family:var(--font-mono);">'+s.l+'</div>' +
+      '<div style="font-size:20px;font-weight:700;font-family:var(--font-mono);color:'+s.c+';">'+s.v+'</div>' +
+      '<div style="font-size:8px;color:'+s.c+';font-family:var(--font-mono);opacity:0.8;">'+s.desc+'</div>' +
+      '<div style="height:1px;background:var(--border);margin:2px 0;"></div>' +
+      '<div style="font-size:9px;color:var(--text2);font-family:var(--font-mono);line-height:1.6;">'+s.explain+'</div>' +
+      '<div style="font-size:8px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;background:var(--bg3);padding:6px;border-radius:4px;border-left:2px solid var(--border2);">💡 '+s.what+'</div>' +
     '</div>').join('') +
   '</div>' +
-  '<div style="background:var(--bg4);border-radius:6px;padding:10px;font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.7;">' +
-    '💡 <strong style="color:var(--text2)">Reading your edge:</strong> ' +
+  '<div style="background:var(--bg4);border-radius:8px;padding:14px;font-family:var(--font-mono);border:1px solid var(--border);">' +
+    '<div style="font-size:8px;color:var(--blue);letter-spacing:2px;margin-bottom:10px;">📖 QUICK REFERENCE — WHAT NUMBERS TO AIM FOR</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;">' +
+    [
+      ['Expectancy',    'Above 0',   'Anything positive means edge exists'],
+      ['Profit Factor', 'Above 1.5', 'Above 1.0 = profitable. 1.5+ = strong'],
+      ['Max Drawdown',  'Under 10%', 'Under 20% is acceptable for beginners'],
+      ['Sharpe Ratio',  'Above 1.0', 'Above 2.0 = excellent consistency'],
+      ['Win Rate',      '45–60%',    'Depends on your R:R — not standalone'],
+      ['Sample Size',   '50+ trades','Less than 20 = unreliable statistics'],
+    ].map(([m,t,n])=>'<div style="background:var(--bg3);border-radius:5px;padding:8px;">' +
+      '<div style="font-size:7px;color:var(--text3);letter-spacing:1px;margin-bottom:2px;">'+m+'</div>' +
+      '<div style="font-size:11px;color:#22c55e;font-weight:700;margin-bottom:2px;">Target: '+t+'</div>' +
+      '<div style="font-size:8px;color:var(--text4);line-height:1.5;">'+n+'</div>' +
+    '</div>').join('') +
+    '</div>' +
+  '</div>' +
+  '<div style="margin-top:10px;background:var(--bg4);border-radius:8px;padding:14px;font-family:var(--font-mono);border:1px solid var(--border);">' +
+    '<div style="font-size:8px;color:var(--blue);letter-spacing:2px;margin-bottom:8px;">⚡ READING YOUR EDGE</div>' +
+    '<div style="font-size:10px;line-height:1.8;color:var(--text2);">' +
     (expectancy > 0 && profitFactor > 1
-      ? '<span style="color:#22c55e">Your strategy shows a positive edge. Keep logging trades to confirm.</span>'
+      ? '<span style="color:#22c55e;">✅ Your strategy shows a positive edge. Keep logging trades to confirm — the more trades you log the more reliable this becomes.</span>'
       : expectancy > 0
-      ? '<span style="color:#eab308">Positive expectancy but profit factor is weak. Focus on cutting losses.</span>'
-      : '<span style="color:#ef4444">No edge detected yet. May need more trades or strategy refinement.</span>') +
+      ? '<span style="color:#eab308;">⚠️ Positive expectancy but profit factor is weak. Focus on cutting losses shorter or letting winners run longer.</span>'
+      : '<span style="color:#ef4444;">❌ No edge detected yet. This could mean: (1) not enough trades logged yet, (2) rules are being broken, or (3) strategy needs refinement.</span>') +
+    '</div>' +
   '</div>';
 }
 
