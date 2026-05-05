@@ -4,6 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Forex Trade Journal</title>
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-5W4NQKRH8D"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-5W4NQKRH8D');
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
@@ -366,6 +375,28 @@
     .sig-style-btn:hover { transform: translateY(-1px); }
   }
 
+  /* HAMBURGER MENU */
+  .action-desktop { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; width:100%; }
+  .action-mobile  { display:none; justify-content:flex-end; width:100%; }
+  .ham-tab-btn  { background:var(--bg4); border:1px solid var(--border); color:var(--text2); padding:10px 14px; border-radius:6px; cursor:pointer; font-family:var(--font-mono); font-size:11px; text-align:left; transition:all 0.15s; width:100%; }
+  .ham-tab-btn:hover { background:var(--blue-bg); border-color:var(--blue); color:var(--blue); }
+  .ham-action-btn { background:var(--bg4); border:1px solid var(--border); color:var(--text2); padding:10px 14px; border-radius:6px; cursor:pointer; font-family:var(--font-mono); font-size:10px; text-align:left; transition:all 0.15s; width:100%; }
+  .ham-action-btn:hover { background:var(--bg3); border-color:var(--border2); color:var(--text); }
+
+  /* TABS RESPONSIVE */
+  .tabs-desktop { display:flex; }
+  .tabs-mobile  { display:none; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tab-m { padding:12px 14px; background:none; border:none; border-bottom:2px solid transparent; color:var(--text3); cursor:pointer; font-size:16px; transition:color 0.2s; white-space:nowrap; }
+  .tab-m.active { color:var(--blue); border-bottom-color:var(--blue); }
+
+  @media(max-width:700px) {
+    .action-desktop { display:none; }
+    .action-mobile  { display:flex; }
+    .tabs-desktop   { display:none; }
+    .tabs-mobile    { display:flex; width:100%; }
+    #action-bar { justify-content:flex-end; padding:8px 14px; }
+  }
+
   /* FOOTER */
   #site-footer { background: var(--bg2); border-top: 1px solid var(--border); padding: 28px 20px 20px; margin-top: 20px; }
 
@@ -567,8 +598,11 @@
     <!-- Session badge -->
     <div>
       <div class="session-badge" id="session-badge">
-        <div class="s-label" id="s-label">SESSION</div>
+        <div class="s-label" id="s-label">MARKET STATUS</div>
         <div class="s-name" id="s-name">Loading...</div>
+        <div id="s-market" style="font-size:9px;font-family:var(--font-mono);margin-top:3px;"></div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:5px 0;"></div>
+        <div style="font-size:7px;color:var(--text4);letter-spacing:1px;font-family:var(--font-mono);margin-bottom:2px;">YOUR SCHEDULE</div>
         <div class="s-trade" id="s-trade"></div>
       </div>
     </div>
@@ -596,13 +630,71 @@
 
 <!-- ACTION BAR -->
 <div id="action-bar">
-  <button class="btn btn-ghost" onclick="autofillTime()">⏱ USE CURRENT TIME</button>
-  <button class="btn btn-ghost" onclick="togglePipRef()">📖 PIP REFERENCE</button>
-  <button class="btn btn-ghost" onclick="resetProfile()">⚙ EDIT PROFILE</button>
-  <button class="btn btn-pdf" onclick="exportPDF()">⬇ DOWNLOAD PDF</button>
-  <button class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-color:#f59e0b;color:#fff;" onclick="toggleQuickEntry()">⚡ QUICK ENTRY</button>
-  <button class="btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#7c3aed;color:#fff;" onclick="toggleMT5Paste()">📋 PASTE MT5</button>
-  <button class="btn btn-blue" onclick="toggleForm()">+ FULL ENTRY</button>
+  <!-- Desktop: show all buttons -->
+  <div class="action-desktop">
+    <button class="btn btn-ghost" onclick="autofillTime()">⏱ USE CURRENT TIME</button>
+    <button class="btn btn-ghost" onclick="togglePipRef()">📖 PIP REFERENCE</button>
+    <button class="btn btn-ghost" onclick="resetProfile()">⚙ EDIT PROFILE</button>
+    <button class="btn btn-pdf" onclick="exportPDF()">⬇ DOWNLOAD PDF</button>
+    <button class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-color:#f59e0b;color:#fff;" onclick="toggleQuickEntry()">⚡ QUICK ENTRY</button>
+    <button class="btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#7c3aed;color:#fff;" onclick="toggleMT5Paste()">📋 PASTE MT5</button>
+    <button class="btn btn-blue" onclick="toggleForm()">+ FULL ENTRY</button>
+  </div>
+  <!-- Mobile: hamburger + core buttons -->
+  <div class="action-mobile">
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="btn" style="background:linear-gradient(135deg,#f59e0b,#d97706);border-color:#f59e0b;color:#fff;padding:8px 12px;" onclick="toggleQuickEntry()">⚡</button>
+      <button class="btn" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#7c3aed;color:#fff;padding:8px 12px;" onclick="toggleMT5Paste()">📋</button>
+      <button class="btn btn-blue" style="padding:8px 12px;" onclick="toggleForm()">+ LOG</button>
+      <button class="btn btn-ghost" id="hamburger-btn" onclick="toggleHamburger()" style="padding:8px 12px;font-size:16px;">☰</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAMBURGER MENU DROPDOWN -->
+<div id="hamburger-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;">
+  <!-- Backdrop -->
+  <div onclick="toggleHamburger()" style="position:absolute;inset:0;background:rgba(0,0,0,0.7);"></div>
+  <!-- Menu panel -->
+  <div style="position:absolute;top:0;right:0;width:280px;height:100%;background:var(--bg3);border-left:1px solid var(--border2);display:flex;flex-direction:column;overflow-y:auto;">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:11px;color:var(--blue);letter-spacing:2px;font-family:var(--font-mono);">MENU</div>
+      <button onclick="toggleHamburger()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px;">✕</button>
+    </div>
+
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+      <div style="font-size:8px;color:var(--text4);letter-spacing:2px;font-family:var(--font-mono);margin-bottom:10px;">NAVIGATE</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="ham-tab-btn" onclick="switchTabMobile('dashboard')">📊 Dashboard</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('charts')">📈 Charts</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('calendar')">📅 Calendar</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('log')">📋 Trade Log</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('discipline')">🎯 Discipline</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('signal')">📡 Signal</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('quant')">🧮 Quant</button>
+        <button class="ham-tab-btn" onclick="switchTabMobile('updates')">🆕 Updates</button>
+      </div>
+    </div>
+
+    <div style="padding:12px 18px;border-bottom:1px solid var(--border);">
+      <div style="font-size:8px;color:var(--text4);letter-spacing:2px;font-family:var(--font-mono);margin-bottom:10px;">ACTIONS</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button class="ham-action-btn" onclick="autofillTime();toggleHamburger()">⏱ Use Current Time</button>
+        <button class="ham-action-btn" onclick="togglePipRef();toggleHamburger()">📖 Pip Reference</button>
+        <button class="ham-action-btn" onclick="exportPDF();toggleHamburger()">⬇ Download PDF</button>
+        <button class="ham-action-btn" onclick="resetProfile();toggleHamburger()">⚙ Edit Profile</button>
+      </div>
+    </div>
+
+    <div style="padding:12px 18px;">
+      <div style="font-size:8px;color:var(--text4);letter-spacing:2px;font-family:var(--font-mono);margin-bottom:10px;">LOG A TRADE</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button style="background:linear-gradient(135deg,#f59e0b,#d97706);border:1px solid #f59e0b;color:#fff;padding:10px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-align:left;" onclick="toggleQuickEntry();toggleHamburger()">⚡ QUICK ENTRY — fastest</button>
+        <button style="background:linear-gradient(135deg,#7c3aed,#5b21b6);border:1px solid #7c3aed;color:#fff;padding:10px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-align:left;" onclick="toggleMT5Paste();toggleHamburger()">📋 PASTE MT5 — from history</button>
+        <button style="background:linear-gradient(135deg,#0ea5e9,#0284c7);border:1px solid #0ea5e9;color:#fff;padding:10px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:10px;letter-spacing:1px;text-align:left;" onclick="toggleForm();toggleHamburger()">📝 FULL ENTRY — all details</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MT5 PASTE PANEL -->
@@ -908,14 +1000,28 @@
 
 <!-- TABS -->
 <div id="tabs">
-  <button class="tab active" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
-  <button class="tab" onclick="switchTab('charts',this)">📈 Charts</button>
-  <button class="tab" onclick="switchTab('calendar',this)">📅 Calendar</button>
-  <button class="tab" onclick="switchTab('log',this)">📋 Trade Log</button>
-  <button class="tab" onclick="switchTab('discipline',this)">🎯 Discipline</button>
-  <button class="tab" onclick="switchTab('signal',this)">📡 Signal</button>
-  <button class="tab" onclick="switchTab('quant',this)">🧮 Quant</button>
-  <button class="tab" onclick="switchTab('updates',this)">🆕 Updates</button>
+  <!-- Desktop: all tabs visible -->
+  <div class="tabs-desktop">
+    <button class="tab active" id="tabd-dashboard" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+    <button class="tab" id="tabd-charts" onclick="switchTab('charts',this)">📈 Charts</button>
+    <button class="tab" id="tabd-calendar" onclick="switchTab('calendar',this)">📅 Calendar</button>
+    <button class="tab" id="tabd-log" onclick="switchTab('log',this)">📋 Trade Log</button>
+    <button class="tab" id="tabd-discipline" onclick="switchTab('discipline',this)">🎯 Discipline</button>
+    <button class="tab" id="tabd-signal" onclick="switchTab('signal',this)">📡 Signal</button>
+    <button class="tab" id="tabd-quant" onclick="switchTab('quant',this)">🧮 Quant</button>
+    <button class="tab" id="tabd-updates" onclick="switchTab('updates',this)">🆕 Updates</button>
+  </div>
+  <!-- Mobile: scrollable compact tabs -->
+  <div class="tabs-mobile">
+    <button class="tab-m active" id="tabm-dashboard" onclick="switchTab('dashboard',this)">📊</button>
+    <button class="tab-m" id="tabm-charts" onclick="switchTab('charts',this)">📈</button>
+    <button class="tab-m" id="tabm-calendar" onclick="switchTab('calendar',this)">📅</button>
+    <button class="tab-m" id="tabm-log" onclick="switchTab('log',this)">📋</button>
+    <button class="tab-m" id="tabm-discipline" onclick="switchTab('discipline',this)">🎯</button>
+    <button class="tab-m" id="tabm-signal" onclick="switchTab('signal',this)">📡</button>
+    <button class="tab-m" id="tabm-quant" onclick="switchTab('quant',this)">🧮</button>
+    <button class="tab-m" id="tabm-updates" onclick="switchTab('updates',this)">🆕</button>
+  </div>
 </div>
 
 <!-- CONTENT -->
@@ -1241,7 +1347,20 @@
 
     <div class="card" style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:10px;"><span style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:3px 10px;border-radius:4px;font-family:var(--font-mono);font-size:10px;font-weight:700;">LATEST</span> <span style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--text);">v1.4.0</span></div>
+        <div style="display:flex;align-items:center;gap:10px;"><span style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:3px 10px;border-radius:4px;font-family:var(--font-mono);font-size:10px;font-weight:700;">LATEST</span> <span style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--text);">v1.5.0</span></div>
+        <span style="font-size:9px;color:var(--text4);font-family:var(--font-mono);">May 2026</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">📊</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Google Analytics</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Google Analytics (GA4) is now integrated. Tracks visitor count, location, traffic source, device type, and which tabs are used most. Data visible in analytics.google.com — no impact on user privacy or data stored in the journal.</div></div></div>
+        <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">☰</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Hamburger Menu — Mobile</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">On mobile, the action bar now shows a hamburger menu (☰) that slides in from the right. All 8 tabs and all action buttons are accessible from one tap. Tabs become emoji-only icons on small screens.</div></div></div>
+        <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">🕐</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Market Status + Personal Schedule</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Session badge now shows two things: actual forex market hours (open/closed based on real day and time including weekends) AND your personal trading schedule separately. No more confusion between market hours and your own rules.</div></div></div>
+        <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">🔧</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Bug Fixes</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Fixed toFixed undefined errors in Signal tab. Fixed template literals showing as raw text in Updates and Correlation tabs. Fixed duplicate variable declarations causing JS crashes. Fixed candle.c undefined in optimal entry card.</div></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:14px;font-weight:700;font-family:var(--font-mono);color:var(--text);">v1.4.0</span></div>
         <span style="font-size:9px;color:var(--text4);font-family:var(--font-mono);">May 2026</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;">
@@ -1401,32 +1520,73 @@ function fmt12short(str) {
   const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
   return `${h}:${mm} ${ap}`;
 }
-function getSession(h, m) {
-  const t = h + m / 60;
-  if (!profile) return { label:'💤 OFF HOURS', color:'#475569', bg:'#1e293b', border:'#334155', trade: false };
-  // Default PHT sessions — adjust if needed based on timezone
-  if (t >= 20 && t < 23) return { label:'🔥 BEST — London/NY Overlap', color:'#22c55e', bg:'#14532d', border:'#166534', trade:true };
-  if (t >= 15 && t < 20) return { label:'✅ GOOD — London Session', color:'#0ea5e9', bg:'#0c2340', border:'#1e3a5f', trade:true };
-  if (t >= 23 || t < 3)  return { label:'⛔ STOP — Session Closed', color:'#ef4444', bg:'#450a0a', border:'#7f1d1d', trade:false };
-  if (t >= 12 && t < 15) return { label:'⚠️ AVOID — Low Volume', color:'#eab308', bg:'#422006', border:'#854d0e', trade:false };
-  return { label:'💤 OFF HOURS', color:'#475569', bg:'#1e293b', border:'#334155', trade:false };
+function getMarketStatus(phtDay, phtH, phtM) {
+  // Forex market hours in PHT (UTC+8):
+  // Opens: Monday 5:00 AM PHT (Sunday 9PM UTC / Sunday 5PM EST)
+  // Closes: Saturday 5:00 AM PHT (Friday 9PM UTC / Friday 5PM EST)
+  const t = phtH + phtM / 60;
+  // Saturday after 5AM = closed
+  if (phtDay === 6 && t >= 5) return { open:false, label:'🔴 MARKET CLOSED', sub:'Opens Mon 5:00 AM PHT', color:'#ef4444', bg:'#450a0a', border:'#7f1d1d' };
+  // Sunday before 5AM = closed
+  if (phtDay === 0 && t < 5)  return { open:false, label:'🔴 MARKET CLOSED', sub:'Opens Mon 5:00 AM PHT', color:'#ef4444', bg:'#450a0a', border:'#7f1d1d' };
+  // Sunday after 5AM = open (Asian session starting)
+  // Monday through Friday any time = open
+  // Saturday before 5AM = open (Friday NY session still running)
+  // Now show which major session is active (PHT times)
+  if (t >= 20 && t < 23) return { open:true, label:'🟢 MARKET OPEN', sub:'London + NY Overlap active', color:'#22c55e', bg:'#14532d', border:'#166534' };
+  if (t >= 15 && t < 20) return { open:true, label:'🟢 MARKET OPEN', sub:'London session active', color:'#22c55e', bg:'#14532d', border:'#166534' };
+  if ((t >= 23 || t < 2)) return { open:true, label:'🟢 MARKET OPEN', sub:'NY session active', color:'#22c55e', bg:'#14532d', border:'#166634' };
+  if (t >= 2 && t < 5)   return { open:true, label:'🟢 MARKET OPEN', sub:'NY session closing', color:'#22c55e', bg:'#14532d', border:'#166534' };
+  if (t >= 5 && t < 8)   return { open:true, label:'🟢 MARKET OPEN', sub:'Asian session active', color:'#0ea5e9', bg:'#0c2340', border:'#1e3a5f' };
+  if (t >= 8 && t < 12)  return { open:true, label:'🟢 MARKET OPEN', sub:'Asian/London overlap', color:'#0ea5e9', bg:'#0c2340', border:'#1e3a5f' };
+  return { open:true, label:'🟢 MARKET OPEN', sub:'Low volume period', color:'#64748b', bg:'#1e293b', border:'#334155' };
 }
+
+function getPersonalSession(h, m) {
+  const t = h + m / 60;
+  if (t >= 20 && t < 23) return { label:'🔥 BEST — London/NY Overlap', color:'#22c55e', trade:true };
+  if (t >= 15 && t < 20) return { label:'✅ GOOD — London Session', color:'#0ea5e9', trade:true };
+  if (t >= 23 || t < 3)  return { label:'⏸ REST — Outside Your Hours', color:'#94a3b8', trade:false };
+  if (t >= 12 && t < 15) return { label:'⚠️ AVOID — Low Volume', color:'#eab308', trade:false };
+  return { label:'💤 OFF HOURS — Sleep/Work', color:'#475569', trade:false };
+}
+
+// Keep getSession for backward compat
+function getSession(h, m) { return { ...getPersonalSession(h,m), bg:'#1e293b', border:'#334155' }; }
+
 function updateClock() {
   if (!profile) return;
   const now = new Date();
   const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
   const localDate = new Date(utcMs + profile.tz * 3600000);
-  const mt5Date  = new Date(utcMs + 3 * 3600000);
+  const mt5Date   = new Date(utcMs + 3 * 3600000);
   document.getElementById('local-clock').textContent = fmt12(localDate);
-  document.getElementById('mt5-clock').textContent = fmt12(mt5Date);
-  document.getElementById('local-date').textContent = `${DAYS[localDate.getDay()]} · ${MONTHS[localDate.getMonth()].slice(0,3)} ${localDate.getDate()}`;
-  const sess = getSession(localDate.getHours(), localDate.getMinutes());
+  document.getElementById('mt5-clock').textContent   = fmt12(mt5Date);
+  document.getElementById('local-date').textContent  = `${DAYS[localDate.getDay()]} · ${MONTHS[localDate.getMonth()].slice(0,3)} ${localDate.getDate()}`;
+
+  const mkt  = getMarketStatus(localDate.getDay(), localDate.getHours(), localDate.getMinutes());
+  const sess = getPersonalSession(localDate.getHours(), localDate.getMinutes());
+
   const badge = document.getElementById('session-badge');
-  badge.style.background = sess.bg; badge.style.borderColor = sess.border;
-  document.getElementById('s-label').style.color = sess.color;
-  document.getElementById('s-name').style.color = sess.color;
-  document.getElementById('s-name').textContent = sess.label;
-  document.getElementById('s-trade').textContent = sess.trade ? '✅ You may trade' : '❌ Do not trade';
+  badge.style.background   = mkt.bg;
+  badge.style.borderColor  = mkt.border;
+
+  const labelEl = document.getElementById('s-label');
+  labelEl.style.color = mkt.color;
+  labelEl.textContent = 'MARKET STATUS';
+
+  const nameEl = document.getElementById('s-name');
+  nameEl.style.color = mkt.color;
+  nameEl.textContent = mkt.label;
+
+  const mktEl = document.getElementById('s-market');
+  if (mktEl) { mktEl.style.color = mkt.color; mktEl.textContent = mkt.sub; }
+
+  const tradeEl = document.getElementById('s-trade');
+  if (tradeEl) {
+    tradeEl.style.color = sess.color;
+    tradeEl.textContent = sess.label;
+  }
 }
 setInterval(updateClock, 1000);
 
@@ -1836,12 +1996,35 @@ function renderDiscipline(s) {
 // ─── TABS ────────────────────────────────────────────────
 function switchTab(id, el) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  el.classList.add('active');
+  // Desktop tabs
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const dtab = document.getElementById('tabd-'+id);
+  if (dtab) dtab.classList.add('active');
+  // Mobile tabs
+  document.querySelectorAll('.tab-m').forEach(t=>t.classList.remove('active'));
+  const mtab = document.getElementById('tabm-'+id);
+  if (mtab) mtab.classList.add('active');
   if (id === 'signal') loadSigSettings();
   if (id === 'quant') { renderQuantStats(); rorFillFromJournal(); }
   setTimeout(()=>{ const s=getStats(); renderCharts(s); },50);
+}
+
+function switchTabMobile(id) {
+  // Close hamburger then switch tab
+  document.getElementById('hamburger-menu').style.display = 'none';
+  document.body.style.overflow = '';
+  const el = document.getElementById('tabd-'+id) || document.getElementById('tabm-'+id);
+  switchTab(id, el);
+  // Scroll to top of content
+  document.getElementById('content').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function toggleHamburger() {
+  const menu = document.getElementById('hamburger-menu');
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  document.body.style.overflow = isOpen ? '' : 'hidden';
 }
 
 // ─── PDF EXPORT ──────────────────────────────────────────
