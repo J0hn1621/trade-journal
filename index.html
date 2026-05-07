@@ -1224,6 +1224,7 @@
 
     <!-- Overall Bias -->
     <div id="sig-overall" class="sig-overall" style="display:none;"></div>
+    <div id="sig-amd" style="display:none;margin-bottom:14px;"></div>
 
     <!-- Level Cards Grid -->
     <div class="sig-levels-grid" id="sig-levels-grid">
@@ -1352,6 +1353,7 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;">
         <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">📊</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Google Analytics</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Google Analytics (GA4) is now integrated. Tracks visitor count, location, traffic source, device type, and which tabs are used most. Data visible in analytics.google.com — no impact on user privacy or data stored in the journal.</div></div></div>
+        <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">🔵</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">AMD Phase Detection</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">New card in the Signal tab showing the current Accumulation, Manipulation, or Distribution phase. Detects EMA compression (Accumulation), liquidity sweeps (Manipulation), and BOS confirmation (Distribution). Includes confidence score and plain English explanation of what each phase means for your next trade.</div></div></div>
         <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">☰</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Hamburger Menu — Mobile</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">On mobile, the action bar now shows a hamburger menu (☰) that slides in from the right. All 8 tabs and all action buttons are accessible from one tap. Tabs become emoji-only icons on small screens.</div></div></div>
         <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">🕐</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Market Status + Personal Schedule</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Session badge now shows two things: actual forex market hours (open/closed based on real day and time including weekends) AND your personal trading schedule separately. No more confusion between market hours and your own rules.</div></div></div>
         <div style="display:flex;gap:10px;background:var(--bg4);border-radius:6px;padding:10px;"><span style="font-size:16px;">🔧</span><div><div style="font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--text);margin-bottom:2px;">Bug Fixes</div><div style="font-size:9px;color:var(--text4);font-family:var(--font-mono);line-height:1.6;">Fixed toFixed undefined errors in Signal tab. Fixed template literals showing as raw text in Updates and Correlation tabs. Fixed duplicate variable declarations causing JS crashes. Fixed candle.c undefined in optimal entry card.</div></div></div>
@@ -2068,58 +2070,87 @@ function parseMT5() {
   const loadBtn = document.getElementById('mt5-load-btn');
   try {
     const text = raw.replace(/\n/g,' ').replace(/\s+/g,' ');
-    const pairMatch = text.match(/([A-Z]{3,6})[,\s]+(buy|sell)\s+([\d.]+)/i);
-    const pair  = pairMatch ? pairMatch[1].toUpperCase() : null;
-    const dir   = pairMatch ? pairMatch[2].toUpperCase() : null;
-    const lot   = pairMatch ? parseFloat(pairMatch[3]) : 0.01;
-    const priceMatch = text.match(/([\d]+\.[\d]+)\s*[''\x60→\-–nN]+\s*([\d]+\.[\d]+)/);
-    const entry = priceMatch ? parseFloat(priceMatch[1]) : null;
-    const exitP = priceMatch ? parseFloat(priceMatch[2]) : null;
-    const slMatch = text.match(/S\s*[\/\-]\s*L[:\s]+([\d.]+)/i);
-    const sl = slMatch ? parseFloat(slMatch[1]) : null;
-    const tpMatch = text.match(/T\s*[\/\-]\s*P[:\s]+([\d.]+)/i);
-    const tp = tpMatch ? parseFloat(tpMatch[1]) : null;
-    const profitMatch = text.match(/([+-]?\s*[\d]+\.[\d]+)\s*$/);
-    const profit = profitMatch ? parseFloat(profitMatch[1].replace(/\s/g,'')) : null;
-    const dateMatch = text.match(/(\d{4}[.\-\/]\d{2}[.\-\/]\d{2})\s+(\d{2}:\d{2})/);
-    const tradeDate = dateMatch ? dateMatch[1].replace(/\./g,'-') : null;
-    const tradeTime = dateMatch ? dateMatch[2] : null;
-    const tz = profile ? profile.tz : 8;
-    const offset = tz - 3;
-    let localTime = tradeTime;
-    if (tradeTime && offset !== 0) {
-      const [hh,mm] = tradeTime.split(':').map(Number);
-      const totalMins = hh*60 + mm + offset*60;
-      const lh = Math.floor(((totalMins%1440)+1440)%1440/60);
-      const lm = ((totalMins%60)+60)%60;
-      localTime = `${String(lh).padStart(2,'0')}:${String(lm).padStart(2,'0')}`;
+    let pair=null,dir=null,lot=0.01,entry=null,exitP=null,sl=null,tp=null,profit=null,tradeDate=null,tradeTime=null;
+
+    // FORMAT A: "Trade 1: EURUSD Buy (#123)" with Open Price / Close Price / Open (PHT)
+    const fmtA = text.match(/:\s*([A-Z]{3,6})\s+(Buy|Sell)\s*[\(#]/i);
+    if (fmtA) {
+      pair = fmtA[1].toUpperCase();
+      dir  = fmtA[2].toUpperCase();
+      const openM  = text.match(/Open\s+Price\s*:\s*([\d.]+)/i);
+      const closeM = text.match(/Close\s+Price\s*:\s*([\d.]+)/i);
+      if (openM)  entry = parseFloat(openM[1]);
+      if (closeM) exitP = parseFloat(closeM[1]);
+      const dtM = text.match(/Open\s*\(PHT\)\s*:\s*(\w+)\s+(\d+),\s*(\d{4}),\s*(\d+):(\d+):\d+\s*(AM|PM)/i);
+      if (dtM) {
+        const mons = {january:'01',february:'02',march:'03',april:'04',may:'05',june:'06',
+          july:'07',august:'08',september:'09',october:'10',november:'11',december:'12'};
+        const mon = mons[dtM[1].toLowerCase()]||'01';
+        tradeDate = dtM[3]+'-'+mon+'-'+dtM[2].padStart(2,'0');
+        let hh=parseInt(dtM[4]); const mm=dtM[5],ap=dtM[6].toUpperCase();
+        if(ap==='AM'&&hh===12) hh=0; if(ap==='PM'&&hh!==12) hh+=12;
+        tradeTime = String(hh).padStart(2,'0')+':'+mm;
+      }
+      const profM = text.match(/Profit\s*:\s*([+-]?[\d.]+)/i);
+      if (profM) profit = parseFloat(profM[1]);
     }
-    if (!pair || !dir || !entry) throw new Error('Could not detect pair, direction, or entry price.');
-    const inst = INSTRUMENTS[pair] || INSTRUMENTS['EURUSD'];
-    const rawPips = exitP ? (dir==='BUY'?(exitP-entry)/inst.pipSize:(entry-exitP)/inst.pipSize) : 0;
-    const pips = exitP ? Math.round(rawPips*10)/10 : null;
-    const pnl  = profit !== null ? profit : (pips ? +(pips*inst.pipVal*(lot/0.01)).toFixed(2) : null);
-    const result = pnl > 0 ? 'WIN' : pnl < 0 ? 'LOSS' : 'BE';
-    mt5Parsed = { pair, dir, lot, entry, exit:exitP, sl, tp, pips, pnl, result, date:tradeDate, time:localTime };
-    const col = result==='WIN'?'#22c55e':result==='LOSS'?'#ef4444':'#eab308';
-    res.style.display = 'block';
-    res.innerHTML = `<div style="font-size:9px;color:#22c55e;letter-spacing:1px;margin-bottom:8px;">✅ TRADE PARSED SUCCESSFULLY</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;">
-        ${[['PAIR',pair],['DIRECTION',dir],['LOT',lot],['ENTRY',entry?.toFixed(5)],['EXIT',exitP?.toFixed(5)||'—'],['SL',sl?.toFixed(5)||'—'],['TP',tp?.toFixed(5)||'—'],['PIPS',(pips>0?'+':'')+pips],['PNL',(pnl>=0?'+$':'$')+(pnl?.toFixed(2)||'—')],['RESULT',result],['DATE',tradeDate||'—'],['LOCAL TIME',localTime||'—']].map(([l,v])=>`
-        <div style="background:var(--bg3);padding:7px;border-radius:5px;">
-          <div style="font-size:7px;color:var(--text3);letter-spacing:1px;margin-bottom:2px;">${l}</div>
-          <div style="font-size:11px;font-weight:700;color:${l==='RESULT'?col:l==='DIRECTION'?dir==='BUY'?'#22c55e':'#ef4444':'#e2e8f0'}">${v}</div>
-        </div>`).join('')}
-      </div>
-      <div style="margin-top:8px;font-size:9px;color:var(--text4);">Click <strong style="color:#22c55e;">LOAD INTO JOURNAL</strong> to open the full form pre-filled. Add thoughts and emotion before saving.</div>`;
-    loadBtn.style.display = 'inline-block';
+
+    // FORMAT B: Raw MT5 "EURUSD, buy 0.01 1.17623 n 1.17590 Open: 2026.04.20 14:48"
+    if (!pair) {
+      const pM = text.match(/([A-Z]{3,6})[,\s]+(buy|sell)\s+([\d.]+)/i);
+      if (pM) { pair=pM[1].toUpperCase(); dir=pM[2].toUpperCase(); lot=parseFloat(pM[3]); }
+      const prM = text.match(/([\d]+\.[\d]+)\s*[\x27\x60\u2019\u2018\u2192\-\u2013nN]+\s*([\d]+\.[\d]+)/);
+      if (prM) { entry=parseFloat(prM[1]); exitP=parseFloat(prM[2]); }
+      const slM=text.match(/S\s*[\/\-]\s*L[:\s]+([\d.]+)/i); if(slM) sl=parseFloat(slM[1]);
+      const tpM=text.match(/T\s*[\/\-]\s*P[:\s]+([\d.]+)/i); if(tpM) tp=parseFloat(tpM[1]);
+      const prfM=text.match(/([+-]?\s*[\d]+\.[\d]+)\s*$/); if(prfM) profit=parseFloat(prfM[1].replace(/\s/g,''));
+      const dtM2=text.match(/(\d{4}[.\-\/]\d{2}[.\-\/]\d{2})\s+(\d{2}:\d{2})/);
+      if(dtM2){
+        tradeDate=dtM2[1].replace(/\./g,'-'); tradeTime=dtM2[2];
+        const tz=profile?profile.tz:8,offset=tz-3;
+        if(offset!==0){const[hh,mm]=tradeTime.split(':').map(Number);const tot=hh*60+mm+offset*60;const lh=Math.floor(((tot%1440)+1440)%1440/60);const lm=((tot%60)+60)%60;tradeTime=String(lh).padStart(2,'0')+':'+String(lm).padStart(2,'0');}
+      }
+    }
+
+    // FORMAT C: Fallback — find any pair-like word and two prices
+    if (!pair) {
+      const anyP=text.match(/\b([A-Z]{6})\b/); if(anyP) pair=anyP[1];
+      const anyD=text.match(/\b(buy|sell|long|short)\b/i);
+      if(anyD) dir=anyD[1].toUpperCase()==='LONG'?'BUY':anyD[1].toUpperCase()==='SHORT'?'SELL':anyD[1].toUpperCase();
+      const prices=[...text.matchAll(/\b(\d+\.\d{3,6})\b/g)].map(m=>parseFloat(m[1]));
+      if(prices.length>=2){entry=prices[0];exitP=prices[1];}
+    }
+
+    if(!pair||!dir||!entry) throw new Error('Could not detect pair, direction, or entry price. Try pasting the full trade text.');
+
+    const instKey=pair.replace('/','');
+    const inst=INSTRUMENTS[instKey]||INSTRUMENTS['EURUSD'];
+    const rawPips=exitP?(dir==='BUY'?(exitP-entry)/inst.pipSize:(entry-exitP)/inst.pipSize):0;
+    const pips=exitP?Math.round(rawPips*10)/10:null;
+    const pnl=profit!==null?profit:(pips?+(pips*inst.pipVal*(lot/0.01)).toFixed(2):null);
+    const result=pnl>0?'WIN':pnl<0?'LOSS':'BE';
+    mt5Parsed={pair,dir,lot,entry,exit:exitP,sl,tp,pips,pnl,result,date:tradeDate,time:tradeTime};
+    const col=result==='WIN'?'#22c55e':result==='LOSS'?'#ef4444':'#eab308';
+    res.style.display='block';
+    res.innerHTML='<div style="font-size:9px;color:#22c55e;letter-spacing:1px;margin-bottom:8px;">\u2705 TRADE PARSED SUCCESSFULLY</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;">'+
+      [['PAIR',pair],['DIRECTION',dir],['LOT',lot],['ENTRY',entry?.toFixed(5)],['EXIT',exitP?.toFixed(5)||'\u2014'],
+       ['SL',sl?.toFixed(5)||'\u2014'],['TP',tp?.toFixed(5)||'\u2014'],
+       ['PIPS',pips!==null?(pips>0?'+':'')+pips:'\u2014'],
+       ['PNL',pnl!==null?(pnl>=0?'+$':'$')+pnl.toFixed(2):'\u2014'],
+       ['RESULT',result],['DATE',tradeDate||'\u2014'],['LOCAL TIME',tradeTime||'\u2014']
+      ].map(function(item){var l=item[0],v=item[1];return '<div style="background:var(--bg3);padding:7px;border-radius:5px;"><div style="font-size:7px;color:var(--text3);letter-spacing:1px;margin-bottom:2px;">'+l+'</div><div style="font-size:11px;font-weight:700;color:'+(l==='RESULT'?col:l==='DIRECTION'?(dir==='BUY'?'#22c55e':'#ef4444'):'#e2e8f0')+'">'+v+'</div></div>';}).join('')+
+      '</div><div style="margin-top:8px;font-size:9px;color:var(--text4);">Click <strong style="color:#22c55e;">LOAD INTO JOURNAL</strong> to open the full form pre-filled.</div>';
+    loadBtn.style.display='inline-block';
   } catch(e) {
-    res.style.display = 'block';
-    res.innerHTML = `<div style="color:#ef4444;">❌ ${e.message}</div><div style="color:var(--text4);margin-top:6px;font-size:9px;">Copy the full trade row from MT5 History including pair, direction, prices, and date.</div>`;
-    loadBtn.style.display = 'none';
+    res.style.display='block';
+    res.innerHTML='<div style="color:#ef4444;">\u274c '+e.message+'</div>'+
+      '<div style="color:var(--text4);margin-top:6px;font-size:9px;">Accepted formats:<br/>'+
+      '\u2022 App format: "EURUSD Buy · Open Price: 1.17068 | Close Price: 1.17368 · Open (PHT): May 6, 2026..."<br/>'+
+      '\u2022 Raw MT5: "EURUSD, buy 0.01 · 1.17623 \u2192 1.17590 · Open: 2026.04.20 14:48"</div>';
+    loadBtn.style.display='none';
   }
 }
-
 function loadMT5IntoForm() {
   if (!mt5Parsed) return;
   const t = mt5Parsed;
@@ -2488,6 +2519,101 @@ function detectLiquiditySweeps(candles) {
   }
   return sweeps.slice(-2);
 }
+
+function detectAMD(candles, ema9arr, ema21arr) {
+  if(!candles||candles.length<30) return {phase:'UNKNOWN',detail:'Not enough data.',bias:'NEUTRAL',confidence:0,sweepType:null};
+  const last=candles.length-1;
+  const e9=ema9arr[last], e21=ema21arr[last];
+
+  // ATR — avg candle range over last 14
+  const atr14=candles.slice(-14).reduce((s,c)=>s+(c.high-c.low),0)/14;
+
+  // EMA separation — tangled = accumulation signal
+  const emaDiff=e9&&e21?Math.abs(e9-e21):0;
+  const emaTangled=emaDiff<atr14*0.3;
+
+  // Price compression — last 10 candles tight range
+  const last10=candles.slice(-10);
+  const last10H=Math.max(...last10.map(c=>c.high));
+  const last10L=Math.min(...last10.map(c=>c.low));
+  const compressing=(last10H-last10L)<atr14*4;
+
+  // Sweep detection — last 5 candles vs prior 20
+  const prior20=candles.slice(-26,-5);
+  const priorH=Math.max(...prior20.map(c=>c.high));
+  const priorL=Math.min(...prior20.map(c=>c.low));
+  const recent5=candles.slice(-5);
+  let sweepDetected=false, sweepType=null, sweepCandle=null;
+  recent5.forEach(c=>{
+    if(c.low<priorL&&c.close>priorL&&!sweepDetected){sweepDetected=true;sweepType='BULL';sweepCandle=c;}
+    if(c.high>priorH&&c.close<priorH&&!sweepDetected){sweepDetected=true;sweepType='BEAR';sweepCandle=c;}
+  });
+
+  // BOS — last 3 candles breaking prior structure
+  const prior10H=Math.max(...candles.slice(-14,-4).map(c=>c.high));
+  const prior10L=Math.min(...candles.slice(-14,-4).map(c=>c.low));
+  const recentClose=candles[last].close;
+  const bosUp=recentClose>prior10H;
+  const bosDn=recentClose<prior10L;
+
+  // Phase determination
+  if(sweepDetected&&(bosUp||bosDn)){
+    const distBias=sweepType==='BULL'?'BUY':'SELL';
+    const distMatch=(sweepType==='BULL'&&bosUp)||(sweepType==='BEAR'&&bosDn);
+    return {
+      phase:'DISTRIBUTION',
+      detail: sweepType==='BULL'
+        ? 'Lows swept ✅ · BOS confirmed to the upside ✅ · Institutions filled LONG positions and are now distributing price upward. Look for BUY entries.'
+        : 'Highs swept ✅ · BOS confirmed to the downside ✅ · Institutions filled SHORT positions and are now distributing price downward. Look for SELL entries.',
+      bias: distBias,
+      confidence: distMatch?88:65,
+      sweepType,
+      what:'Distribution is the real move. This is where institutions profit from the positions they built during accumulation. Trade WITH the distribution direction.'
+    };
+  }
+
+  if(sweepDetected&&!bosUp&&!bosDn){
+    const manBias=sweepType==='BULL'?'BUY':'SELL';
+    return {
+      phase:'MANIPULATION',
+      detail: sweepType==='BULL'
+        ? 'Lows were just swept ✅ · Retail stop losses triggered below '+priorL.toFixed(5)+' · No BOS yet — price may be reversing. Watch for BUY confirmation.'
+        : 'Highs were just swept ✅ · Retail stop losses triggered above '+priorH.toFixed(5)+' · No BOS yet — price may be reversing. Watch for SELL confirmation.',
+      bias: manBias,
+      confidence: 72,
+      sweepType,
+      what:'Manipulation (the fake move) just happened. Your stop loss may have been hit here — that was intentional. Wait for BOS before entering. This is the highest probability zone.'
+    };
+  }
+
+  if(emaTangled||compressing){
+    return {
+      phase:'ACCUMULATION',
+      detail:'EMAs are flat and tangled · Price is compressing in a tight range · Volume is low · Institutions are quietly building positions. Do NOT trade the range — wait for the manipulation sweep.',
+      bias:'NEUTRAL',
+      confidence:65,
+      sweepType:null,
+      what:'Accumulation is the setup phase. Nothing seems to be happening — that is exactly the point. The big move comes AFTER this. Patience here prevents you from getting trapped in the manipulation.'
+    };
+  }
+
+  // Trending — mid-distribution
+  if(e9&&e21){
+    const trendBias=e9>e21?'BUY':'SELL';
+    return {
+      phase:'DISTRIBUTION',
+      detail: e9>e21
+        ? 'Price is trending up · EMA 9 above EMA 21 · Accumulation and manipulation have already occurred · Distribution (the real move) is underway.'
+        : 'Price is trending down · EMA 9 below EMA 21 · Accumulation and manipulation have already occurred · Distribution (the real move) is underway.',
+      bias: trendBias,
+      confidence: 55,
+      sweepType: null,
+      what:'Mid-distribution. The move has already started. You can still trade WITH the trend but look for a pullback to the EMA or a retest of an OB for a safer entry.'
+    };
+  }
+
+  return {phase:'UNKNOWN',detail:'Cannot determine AMD phase from current data.',bias:'NEUTRAL',confidence:0,sweepType:null,what:''};
+}
 function getKillZone(phtH,phtM) {
   const t=phtH+phtM/60;
   if(t>=15&&t<17) return {name:'🔵 London Open Kill Zone',color:'#0ea5e9',active:true};
@@ -2600,6 +2726,50 @@ function renderFullSignals(pair,results) {
     <div class="sig-overall-value" style="color:${oc}">${ov}</div>
     <div class="sig-overall-sub" style="color:${oc}">${obsub}</div>
     <div class="sig-overall-updated">Updated: ${now.toLocaleTimeString()} · Price: ${results[0]?.price?.toFixed(5)||'—'}</div>`;
+
+  // ── AMD PHASE DETECTION ───────────────────────────────────
+  const amdEl = document.getElementById('sig-amd');
+  if(amdEl && results.length > 0){
+    const amdData = results[0];
+    const amd = detectAMD(amdData.candles, amdData.ema9, amdData.ema21);
+    const phaseColors = {
+      ACCUMULATION: {bg:'#0c2340',bd:'#1e3a5f',c:'#0ea5e9',icon:'🔵'},
+      MANIPULATION: {bg:'#422006',bd:'#854d0e',c:'#f59e0b',icon:'⚠️'},
+      DISTRIBUTION: {bg: amd.bias==='BUY'?'#14532d':'#450a0a', bd: amd.bias==='BUY'?'#166534':'#7f1d1d', c: amd.bias==='BUY'?'#22c55e':'#ef4444', icon: amd.bias==='BUY'?'🟢':'🔴'},
+      UNKNOWN: {bg:'#1e293b',bd:'#334155',c:'#64748b',icon:'❓'}
+    };
+    const pc = phaseColors[amd.phase] || phaseColors.UNKNOWN;
+    const confBar = amd.confidence>0 ? '<div style="background:rgba(0,0,0,0.3);border-radius:3px;height:5px;margin-top:8px;overflow:hidden;"><div style="width:'+amd.confidence+'%;height:100%;background:'+pc.c+';border-radius:3px;transition:width 0.5s;"></div></div><div style="font-size:8px;color:'+pc.c+';font-family:var(--font-mono);margin-top:3px;">Confidence: '+amd.confidence+'%</div>' : '';
+    amdEl.style.display='block';
+    amdEl.innerHTML=
+      '<div style="background:'+pc.bg+';border:2px solid '+pc.bd+';border-radius:10px;padding:14px;font-family:var(--font-mono);">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:10px;">' +
+          '<div>' +
+            '<div style="font-size:8px;color:'+pc.c+';letter-spacing:3px;margin-bottom:4px;">⚡ AMD PHASE DETECTION</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;">' +
+              '<span style="font-size:24px;">'+pc.icon+'</span>' +
+              '<div>' +
+                '<div style="font-size:18px;font-weight:700;color:'+pc.c+';">'+amd.phase+'</div>' +
+                '<div style="font-size:9px;color:'+pc.c+';opacity:0.7;">'+({ACCUMULATION:'Building positions',MANIPULATION:'The fake move',DISTRIBUTION:'The real move',UNKNOWN:'Analyzing...'}[amd.phase])+'</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;">' +
+            ['ACCUMULATION','MANIPULATION','DISTRIBUTION'].map(p=>{
+              const active=p===amd.phase;
+              const pc2=phaseColors[p];
+              return '<div style="text-align:center;opacity:'+(active?'1':'0.35')+';transition:opacity 0.3s;">' +
+                '<div style="width:8px;height:8px;border-radius:50%;background:'+pc2.c+';margin:0 auto 3px;"></div>' +
+                '<div style="font-size:6px;color:'+pc2.c+';letter-spacing:1px;">'+p.slice(0,3)+'</div>' +
+              '</div>';
+            }).join('<div style="width:20px;height:2px;background:rgba(255,255,255,0.1);align-self:center;margin-top:-6px;"></div>') +
+          '</div>' +
+        '</div>' +
+        '<div style="font-size:10px;color:rgba(255,255,255,0.75);line-height:1.7;margin-bottom:8px;">'+amd.detail+'</div>' +
+        confBar +
+        (amd.what?'<div style="margin-top:10px;background:rgba(0,0,0,0.25);border-radius:6px;padding:10px;font-size:9px;color:rgba(255,255,255,0.5);line-height:1.7;border-left:2px solid '+pc.c+';">💡 '+amd.what+'</div>':'') +
+      '</div>';
+  }
 
   // ── FRESHNESS SCORE ──────────────────────────────────────
   // Pre-compute bSig here so freshness section can use it
